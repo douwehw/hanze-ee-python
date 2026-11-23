@@ -1,4 +1,4 @@
-import random
+import random, csv
 import numpy as numpy
 
 random.seed(4)
@@ -25,7 +25,7 @@ def get_user_input():
 
 	if reading_choice == "1":
 		while True:
-			num_readings = input_to_number("How many readings boss?\n>")
+			num_readings = input_to_number("How many readings boss?\n>", int)
 			if num_readings > 0:
 				break
 			print("You need at least 1 reading cuzzo")
@@ -54,7 +54,57 @@ def calculate_statistics(readings):
 	return {
 		"count": int(values.size),
 		"mean": float(values.mean()),
-		"minimum": float(values.min()),
-		"maximum": float(values.max()),
+		"min": float(values.min()),
+		"max": float(values.max()),
 		"standard_deviation": float(values.std())
 	}
+
+def detect_outliers(num_readings, threshold):
+	return [
+		(index, value)
+		for index, value in enumerate(num_readings)
+		if value > threshold
+	]
+
+def save_readings(filename, readings):
+	with open(filename, "w", newline="", encoding="utf-8") as file:
+		writer = csv.writer(file)
+		writer.writerow(["sample_number", "sensor_reading"])
+		writer.writerows(
+			(index, value)
+			for index, value in enumerate(readings)
+		)
+
+def main():
+	reading_choice, sensor_type, threshold, num_readings, min, max, filename = get_user_input()
+	if (reading_choice) == "1":
+		readings = generate_readings(num_readings, min, max)
+	else:
+		print("todo")
+
+	statistics = calculate_statistics(readings)
+	print(f"\n{sensor_type} statistics:")
+	print(f"Number of readings: {statistics['count']}")
+	print(f"Mean: {statistics['mean']:.2f}")
+	print(f"Minimum: {statistics['min']:.2f}")
+	print(f"Maximum value: {statistics['max']:.2f}")
+	print(f"Standard deviation: {statistics['standard_deviation']:.2f}")
+
+	outliers = detect_outliers(readings, threshold)
+	print(f"There are {len(outliers)} readings above the threshold of {threshold}")
+	if outliers:
+		print("The readings in question (sample number, value):")
+		for sample_num, value in outliers:
+			print(f"{sample_num}\t{value:.2f}")
+	else:
+		print("None! There are no values above the threshold!")
+
+	if reading_choice == "1":
+		try:
+			save_readings("sensor_readings.csv", readings)
+			print("Saved readings to 'sensor_readings.csv")
+		except OSError as error:
+			print(f"Could not save readings to csv: {error}")
+
+if __name__ == "__main__":
+	main()
