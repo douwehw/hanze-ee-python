@@ -75,12 +75,31 @@ def save_readings(filename, readings):
 			for index, value in enumerate(readings)
 		)
 
+def load_readings(filename):
+	readings = []
+	with open(filename, "r", newline="", encoding="utf-8") as csvfile:
+			reader = csv.DictReader(csvfile)
+			if not reader.fieldnames or "sensor_reading" not in reader.fieldnames:
+				raise ValueError("CSV must contain a 'sensor_reading' column.")
+			for row_number, row in enumerate(reader, start=2):
+				try:
+					readings.append(float(row["sensor_reading"]))
+				except (TypeError, ValueError):
+					raise ValueError(f"Invalid sensor reading on CSV row {row_number}.")
+	if not readings:
+			raise ValueError("The CSV file contains no readings.")
+	return readings
+
 def main():
 	reading_choice, sensor_type, threshold, num_readings, min, max, filename = get_user_input()
 	if (reading_choice) == "1":
 		readings = generate_readings(num_readings, min, max)
 	else:
-		print("todo")
+		try:
+			readings = load_readings(filename)
+		except (OSError, ValueError) as error:
+			print(f"Could not load readings: {error}")
+			return
 
 	statistics = calculate_statistics(readings)
 	print(f"\n{sensor_type} statistics:")
