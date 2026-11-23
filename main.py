@@ -1,4 +1,5 @@
 import random
+import numpy as numpy
 
 random.seed(4)
 
@@ -45,5 +46,15 @@ def get_user_input():
 	filename = input("CSV file path boss?\n>").strip()
 	return reading_choice, sensor_type, threshold, None, None, None, filename
 
-get_user_input()
-print("I aint doing allat")
+def generate_readings(num_readings, min, max):
+	return [random.uniform(min, max) for _ in range(num_readings)] # _ because we aren't accessing the variable
+
+def calculate_statistics(readings):
+	values = numpy.asarray(readings, dtype=float)
+	return {
+		"count": int(values.size),
+		"mean": float(values.mean()),
+		"minimum": float(values.min()),
+		"maximum": float(values.max()),
+		"standard_deviation": float(values.std())
+	}
