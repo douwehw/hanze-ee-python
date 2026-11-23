@@ -1,5 +1,6 @@
 import random, csv
 import numpy as numpy
+import matplotlib.pyplot as plt
 
 random.seed(4)
 
@@ -90,6 +91,25 @@ def load_readings(filename):
 			raise ValueError("The CSV file contains no readings.")
 	return readings
 
+def plot_readings(readings, threshold, sensor_type):
+	sample_numbers = numpy.arange(1, len(readings) + 1)
+	plt.figure()
+	plt.plot(sample_numbers, readings, label="Sensor Reading")
+	plt.axhline(threshold, color="red", linestyle="dashed", label="Threshold")
+	plt.title(f"{sensor_type} readings")
+	plt.xlabel("Sample number")
+	plt.ylabel(f"{sensor_type} value")
+	plt.grid(True)
+	plt.legend()
+
+def plot_histogram(readings, sensor_type):
+	plt.figure()
+	plt.hist(readings, bins=20, rwidth=0.75)
+	plt.title(f"Distribution of {sensor_type} Readings")
+	plt.xlabel(f"{sensor_type} value")
+	plt.ylabel("Frequency")
+	plt.grid(True)
+
 def main():
 	reading_choice, sensor_type, threshold, num_readings, min, max, filename = get_user_input()
 	if (reading_choice) == "1":
@@ -124,6 +144,10 @@ def main():
 			print("Saved readings to 'sensor_readings.csv")
 		except OSError as error:
 			print(f"Could not save readings to csv: {error}")
+
+	plot_readings(readings, threshold, sensor_type)
+	plot_histogram(readings, sensor_type)
+	plt.show()
 
 if __name__ == "__main__":
 	main()
