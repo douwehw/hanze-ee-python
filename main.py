@@ -5,15 +5,15 @@ import matplotlib.pyplot as plt
 
 random.seed(4)
 
-def input_to_number(prompt, convert=float) -> float | Any:
+def input_to_float(prompt: str) -> float:
 	"""Get's user input and converts it to a data type of choice (float by default)"""
 	while True:
 			try:
-				return convert(input(prompt)) # Float by default
+				return float(input(prompt)) # Float by default
 			except ValueError:
 				print("Please enter a number...")
 
-def get_user_input() -> tuple[Literal["1"], str, float, float, float, float, None] | tuple[Literal["2"], str, float, None, None, None, str]:
+def get_user_input() -> tuple[Literal["1"], str, float, int, float, float, None] | tuple[Literal["2"], str, float, None, None, None, str]:
 	"""Get's the user's input for all the variables to generate plots."""
 	while True:
 		reading_choice = input("Generate new readings (1), or load csv (2): ").strip()
@@ -25,18 +25,18 @@ def get_user_input() -> tuple[Literal["1"], str, float, float, float, float, Non
 	if not sensor_type:
 		sensor_type = "placeholder sensor"
 
-	threshold = input_to_number("What's the threshold value boss?\n>")
+	threshold = input_to_float("What's the threshold value boss?\n>")
 
 	if reading_choice == "1":
 		while True:
-			num_readings = input_to_number("How many readings boss?\n>", int) # Example of input_to_number conversion being something other than a float
+			num_readings = int(input_to_float("How many readings boss?\n>"))
 			if num_readings > 0:
 				break
 			print("You need at least 1 reading cuzzo")
 
 		while True:
-			min = input_to_number("Minimum value boss?\n>")
-			max = input_to_number("Maximum value boss?\n>")
+			min = input_to_float("Minimum value boss?\n>")
+			max = input_to_float("Maximum value boss?\n>")
 			if min < max:
 				break
 			print("The minimum gotta be bigger than the maximum, you understand that right boss?")
@@ -50,11 +50,11 @@ def get_user_input() -> tuple[Literal["1"], str, float, float, float, float, Non
 	filename = input("CSV file path boss?\n>").strip()
 	return reading_choice, sensor_type, threshold, None, None, None, filename # Return only the semantic information, readings come from CSV
 
-def generate_readings(num_readings, min, max) -> list[float]:
+def generate_readings(num_readings: int, min: float, max: float) -> list[float]:
 	"""Generates randomised dummy info for sensor readings"""
 	return [random.uniform(min, max) for _ in range(num_readings)] # _ because we aren't accessing the variable
 
-def calculate_statistics(readings)-> dict[str, Any]:
+def calculate_statistics(readings: list[float])-> dict[str, Any]:
 	"""Uses Numpy to return the count, mean, min, max, and standard deviation"""
 	values = numpy.asarray(readings, dtype=float)
 	return {
@@ -65,15 +65,15 @@ def calculate_statistics(readings)-> dict[str, Any]:
 		"standard_deviation": float(values.std())
 	}
 
-def detect_outliers(num_readings, threshold) -> list[tuple[int, Any]]:
+def detect_outliers(readings: list[float], threshold: float) -> list[tuple[int, Any]]:
 	"""Detects any values in a reading that are above the threshold value"""
 	return [
 		(index, value)
-		for index, value in enumerate(num_readings)
+		for index, value in enumerate(readings)
 		if value > threshold
 	]
 
-def save_readings(filename, readings) -> None:
+def save_readings(filename: str, readings: list[float]) -> None:
 	"""Writes the readings to a CSV file named `sensor_reading.csv`"""
 	with open(filename, "w", newline="", encoding="utf-8") as file:
 		writer = csv.writer(file)
@@ -83,7 +83,7 @@ def save_readings(filename, readings) -> None:
 			for index, value in enumerate(readings)
 		)
 
-def load_readings(filename)-> list[Any]:
+def load_readings(filename: str)-> list[Any]:
 	"""Loads readings from a CSV file. Searches by pathname so file extention is required"""
 	readings = []
 	with open(filename, "r", newline="", encoding="utf-8") as csvfile:
@@ -99,7 +99,7 @@ def load_readings(filename)-> list[Any]:
 			raise ValueError("The CSV file contains no readings.")
 	return readings
 
-def plot_readings(readings, threshold, sensor_type) -> None:
+def plot_readings(readings: list[float], threshold: float, sensor_type: str) -> None:
 	"""Plot a sensor's readings in a nice graph with a threshold line"""
 	sample_numbers = numpy.arange(1, len(readings) + 1)
 	plt.figure()
@@ -111,7 +111,7 @@ def plot_readings(readings, threshold, sensor_type) -> None:
 	plt.grid(True)
 	plt.legend()
 
-def plot_histogram(readings, sensor_type) -> None:
+def plot_histogram(readings: list[float], sensor_type: str) -> None:
 	"""Plots a sensor's reading in a nice histogram with bins that don't touch each other"""
 	plt.figure()
 	plt.hist(readings, bins=20, rwidth=0.75) # rwidth < 1 so the bins don't touch eachother
@@ -122,14 +122,15 @@ def plot_histogram(readings, sensor_type) -> None:
 
 def main() -> None:
 	reading_choice, sensor_type, threshold, num_readings, min, max, filename = get_user_input()
-	if (reading_choice) == "1":
+	if (reading_choice) == "1" and num_readings is not None and min is not None and max is not None:
 		readings = generate_readings(num_readings, min, max)
 	else:
-		try:
-			readings = load_readings(filename)
-		except (OSError, ValueError) as error:
-			print(f"Could not load readings: {error}")
-			return
+		if filename is not None:
+			try:
+				readings = load_readings(filename)
+			except (OSError, ValueError) as error:
+				print(f"Could not load readings: {error}")
+				return
 
 	statistics = calculate_statistics(readings)
 	print(f"\n{sensor_type} statistics:")
